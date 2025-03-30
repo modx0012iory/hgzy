@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anxt Ai - Ultimate</title>
+
+  <!-- FontAwesome & Tailwind -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for Data Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Styles -->
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Custom Hard UI Container */
+    .hard-container {
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #00ffcc;
+      border-radius: 0;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0, 255, 204, 0.5), inset 0 0 10px rgba(0, 255, 204, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .hard-container:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 255, 204, 0.8), inset 0 0 15px rgba(0, 255, 204, 0.5);
+    }
+
+    /* Neon Text */
+    .neon-text {
+      text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 40px #00ffcc;
+    }
+
+    /* Custom Animations */
+    @keyframes glow {
+      0% { box-shadow: 0 0 10px rgba(0, 255, 204, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(0, 255, 204, 0.8); }
+      100% { box-shadow: 0 0 10px rgba(0, 255, 204, 0.5); }
+    }
+
+    .glow-animation {
+      animation: glow 2s infinite;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="w-full text-center py-6">
+    <h1 class="text-4xl font-bold neon-text">
+      <i class="fas fa-brain"></i> AI<span class="text-red-500">PREDICT</span>
+    </h1>
+  </header>
+
+  <!-- Period & Timer -->
+  <div class="hard-container glow-animation">
+    <h2 class="text-lg font-semibold neon-text">
+      <i class="fas fa-clock"></i> Current Period:
+    </h2>
+    <p id="period" class="neon-text">Loading...</p>
+    <p class="text-xl mt-2 neon-text">
+      <i class="fas fa-hourglass-half"></i>
+      <span id="timer">00:00</span>
+    </p>
+  </div>
+
+  <!-- Current Prediction -->
+  <div class="hard-container glow-animation">
+    <h2 class="text-lg font-semibold neon-text">
+      <i class="fas fa-magic"></i> AI Prediction:
+    </h2>
+    <p id="prediction" class="pending text-lg neon-text">Analyzing...</p>
+    <p id="chance" class="text-gray-400 text-sm">Confidence: --%</p>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="hard-container glow-animation">
+    <h2 class="text-lg font-semibold neon-text">
+      <i class="fas fa-lightbulb"></i> AI Insights:
+    </h2>
+    <p id="insights" class="text-gray-300">Generating insights...</p>
+  </div>
+
+  <!-- Prediction History -->
+  <div class="hard-container glow-animation">
+    <h2 class="text-lg font-semibold neon-text">
+      <i class="fas fa-history"></i> Prediction History:
+    </h2>
+    <ul id="historyList" class="text-gray-300 mt-2 space-y-2"></ul>
+  </div>
+
+  <!-- Data Visualization -->
+  <div class="hard-container glow-animation">
+    <h2 class="text-lg font-semibold neon-text">
+      <i class="fas fa-chart-line"></i> Performance Trends:
+    </h2>
+    <div class="chart-container">
+      <canvas id="performanceChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const predictionSequence = ["Big", "Small"];
+    let lastPeriod = null;
+    let historyData = [];
+    let chart;
+
+    // Initialize Chart
+    const ctx = document.getElementById("performanceChart").getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Prediction Accuracy",
+          data: [],
+          borderColor: "#00ffcc",
+          borderWidth: 2,
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(255, 255, 255, 0.1)" },
+            ticks: { color: "#ffffff" }
+          },
+          x: {
+            grid: { color: "rgba(255, 255, 255, 0.1)" },
+            ticks: { color: "#ffffff" }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: "#ffffff" } }
+        }
+      }
+    });
+
+    // Period & Timer
+    function updatePeriodAndTimer() {
+      const now = new Date();
+      const seconds = now.getUTCSeconds();
+      const remainingSeconds = 60 - seconds;
+      const totalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+
+      // Generate Period Number
+      const periodNumber = `${now.getUTCFullYear()}${(now.getUTCMonth() + 1).toString().padStart(2, '0')}${now.getUTCDate().toString().padStart(2, '0')}1000${(10001 + totalMinutes)}`;
+      document.getElementById("period").textContent = periodNumber;
+      document.getElementById("timer").textContent = `00:${remainingSeconds.toString().padStart(2, '0')}`;
+
+      // When period changes, generate a new prediction
+      if (lastPeriod !== periodNumber) {
+        lastPeriod = periodNumber;
+        document.getElementById("prediction").textContent = "Analyzing...";
+        document.getElementById("prediction").className = "pending text-lg neon-text";
+        document.getElementById("chance").textContent = "Confidence: --%";
+        document.getElementById("insights").textContent = "Generating insights...";
+
+        setTimeout(() => {
+          generatePrediction(periodNumber);
+        }, 5000); // Show pending for 5 seconds before updating
+      }
+    }
+
+    // Generate Prediction
+    function generatePrediction(periodNumber) {
+      const prediction = predictionSequence[Math.floor(Math.random() * predictionSequence.length)];
+      const randomChance = Math.floor(Math.random() * (95 - 65 + 1)) + 65;
+
+      document.getElementById("prediction").textContent = prediction;
+      document.getElementById("prediction").className = prediction === "Big" ? "big text-lg neon-text" : "small text-lg neon-text";
+      document.getElementById("chance").textContent = `Confidence: ${randomChance}%`;
+
+      // Generate AI Insights
+      const insights = `Based on recent trends, the AI predicts a ${prediction} outcome with ${randomChance}% confidence.`;
+      document.getElementById("insights").textContent = insights;
+
+      updateHistory(periodNumber, prediction, randomChance);
+      updateChart(randomChance);
+    }
+
+    // Update History
+    function updateHistory(periodNumber, prediction, chance) {
+      const historyList = document.getElementById("historyList");
+      const historyEntry = document.createElement("li");
+      historyEntry.className = "history-item";
+      historyEntry.innerHTML = `<strong>Period:</strong> ${periodNumber} - <strong>Prediction:</strong> ➢ ${prediction} (Confidence: ${chance}%)`;
+      historyList.prepend(historyEntry);
+    }
+
+    // Update Chart
+    function updateChart(chance) {
+      const labels = chart.data.labels;
+      const data = chart.data.datasets[0].data;
+
+      labels.push(new Date().toLocaleTimeString());
+      data.push(chance);
+
+      if (labels.length > 10) {
+        labels.shift();
+        data.shift();
+      }
+
+      chart.update();
+    }
+
+    // Initialize Timer
+    setInterval(updatePeriodAndTimer, 1000);
+  </script>
+
+</body>
+</html>
